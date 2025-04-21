@@ -40,12 +40,6 @@ All this in one intuitive mobile interface for an uninterrupted, immersive exper
 
 ---
 
-## 📱 Screenshots
-
-_Coming soon!_
-
----
-
 ## 🧪 Current Development Status
 
 ✅ Frontend  
@@ -55,5 +49,4 @@ _Coming soon!_
 
 ---
 
-## 📂 Folder Structure (Frontend)
 
