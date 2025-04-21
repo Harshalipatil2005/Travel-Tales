@@ -1,22 +1,34 @@
-import 'package:agri_app/bookresources_page.dart';
-import 'screens/crop_pred.dart';
-import 'screens/crop_price_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'profile_page.dart';
-import 'about_page.dart';
-import 'connect_page.dart';
-import 'login_page.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:weather/weather.dart';
 import 'package:intl/intl.dart';
-import 't&c.dart';
-import 'h&s.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Travel App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.white,
+      ),
+      home: const HomePage(),
+    );
+  }
+}
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -24,16 +36,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  final PageController _pageController = PageController();
   LatLng? _currentPosition;
   final WeatherFactory _wf = WeatherFactory('99cd17ead708315e89e03a2d6deaa5de');
   Weather? _weather;
-  
-  final List<Widget> _pages = [
-    const HomeContent(),
-    const BookResourcesPage(),
-    ConnectPage(),
-  ];
+  String? _locationName;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -41,17 +48,18 @@ class _HomePageState extends State<HomePage> {
     _initializeLocationAndWeather();
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
   Future<void> _initializeLocationAndWeather() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         _showErrorDialog('Location services are disabled. Please enable them.');
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
 
@@ -63,6 +71,7 @@ class _HomePageState extends State<HomePage> {
 
         setState(() {
           _currentPosition = LatLng(position.latitude, position.longitude);
+          _locationName = "Pune, Maharashtra"; // Hardcoding as per the UI image
         });
 
         // Fetch weather data
@@ -73,16 +82,63 @@ class _HomePageState extends State<HomePage> {
           );
           setState(() {
             _weather = weather;
+            _isLoading = false;
           });
         } catch (e) {
+          setState(() {
+            _isLoading = false;
+          });
           _showErrorDialog('Failed to fetch weather data. Please try again later.');
         }
       } else {
+        setState(() {
+          _isLoading = false;
+        });
         _showErrorDialog('Location permission is required for weather updates.');
       }
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       _showErrorDialog('Error initializing location services: $e');
     }
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Language'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('English'),
+                onTap: () {
+                  // Set language to English
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('मराठी'),
+                onTap: () {
+                  // Set language to Marathi
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('हिन्दी'),
+                onTap: () {
+                  // Set language to Hindi
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showErrorDialog(String message) {
@@ -104,331 +160,343 @@ class _HomePageState extends State<HomePage> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'FarmConnect',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      drawer: _buildDrawer(context),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        children: _pages,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.chat),
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    _buildHeader(),
+                    const SizedBox(height: 16),
+                    _buildSearchBar(),
+                    const SizedBox(height: 16),
+                    _buildHeroImage(),
+                    const SizedBox(height: 16),
+                    _buildDots(),
+                    const SizedBox(height: 16),
+                    _buildSectionHeader('Updates', onSeeAllTap: () {}),
+                    const SizedBox(height: 12),
+                    _buildUpdatesRow(),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('Top Destinations', onSeeAllTap: () {}),
+                    const SizedBox(height: 12),
+                    _buildDestinationsRow(),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: 'Booked'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.connect_without_contact), label: 'Connect'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.star_border), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
         ],
       ),
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          UserAccountsDrawerHeader(
-            accountName: const Text("Prajwal"),
-            accountEmail: const Text("prajwal.2242046@viit.ac.in"),
-            currentAccountPicture: const CircleAvatar(
-              backgroundImage: AssetImage('assets/images/farmer.png'),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
             ),
-            decoration: const BoxDecoration(color: Colors.green),
+            child: const Icon(Icons.camera_alt_outlined, size: 20),
           ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('About Us'),
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const AboutUsPage()));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.description_outlined, color: Colors.green),
-            title: Text(
-              'Terms & Conditions',
-              style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black,
+          Column(
+            children: [
+              const Text(
+                'Hello Harshali!',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => TermsPage()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.description_outlined, color: Colors.green),
-            title: Text(
-              'Help & Support',
-              style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black,
-              ),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HelpSupportPage()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout'),
-            onTap: () {
-              Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()));
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-  return SingleChildScrollView(
-    child: Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.blue[700]!,
-                Colors.blue[500]!,
-              ],
-            ),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(50),
-              bottomRight: Radius.circular(50),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+              Row(
+                children: [
+                  const Icon(Icons.location_on, color: Colors.red, size: 16),
+                  Text(
+                    _locationName ?? 'Unknown Location',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.red.shade800,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          child: const WeatherWidget(),
-        ),
-        const SizedBox(height: 24),
-        _buildCarousel(),
-        const SizedBox(height: 16),
-        _buildFeatureCards(context),
-      ],
-    ),
-  );
-}
-
-Widget _buildCarousel() {
-  final List<Map<String, String>> carouselItems = [
-    {
-      'image': 'assets/images/tracter.jpeg',
-      'title': 'Modern Farming Equipment',
-    },
-    {
-      'image': 'assets/images/harvestor.jpeg',
-      'title': 'Advanced Harvesters',
-    },
-    {
-      'image': 'assets/images/irrigation.jpeg',
-      'title': 'Agricultural Innovation',
-    },
-  ];
-
-  return Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 4,
-              height: 20,
+          GestureDetector(
+            onTap: () {
+              _showLanguageDialog(context);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.blue[700],
-                borderRadius: BorderRadius.circular(2),
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
               ),
+              child: const Icon(Icons.language, size: 20),
             ),
-            const SizedBox(width: 8),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Row(
+          children: const [
+            Icon(Icons.search, color: Colors.grey),
+            SizedBox(width: 8),
             Text(
-              'Featured Equipment',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue[900],
+              'Search place...',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroImage() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(
+          children: [
+            Image.network(
+              'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Entrance_of_Shaniwar_Wada.jpg/1200px-Entrance_of_Shaniwar_Wada.jpg',
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 30,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.6),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
-      CarouselSlider(
-        options: CarouselOptions(
-          height: 220.0,
-          autoPlay: true,
-          enlargeCenterPage: true,
-          viewportFraction: 0.85,
-          autoPlayInterval: const Duration(seconds: 4),
-          autoPlayAnimationDuration: const Duration(milliseconds: 800),
-          autoPlayCurve: Curves.fastOutSlowIn,
-          enlargeStrategy: CenterPageEnlargeStrategy.height,
+    );
+  }
+
+  Widget _buildDots() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        3,
+        (index) => Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          height: 6,
+          width: 6,
+          decoration: BoxDecoration(
+            color: index == 0 ? Colors.black : Colors.grey.shade400,
+            shape: BoxShape.circle,
+          ),
         ),
-        items: carouselItems.map((item) {
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 10.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, {required VoidCallback onSeeAllTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    item['image']!,
-                    fit: BoxFit.cover,
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    child: Text(
-                      item['title']!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(1, 1),
-                            blurRadius: 2,
-                            color: Colors.black,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+          ),
+          GestureDetector(
+            onTap: onSeeAllTap,
+            child: const Text(
+              'See All',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
               ),
             ),
-          );
-        }).toList(),
-      ),
-    ],
-  );
-}
-  Widget _buildFeatureCards(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          _buildFeatureCard(
-            context,
-            Icons.water_drop,
-            'Crop Yield Prediction',
-            const CropPredictionScreen(),
-          ),
-          _buildFeatureCard(
-            context,
-            Icons.currency_exchange,
-            'Market Trends',
-            const CropPricePredictionScreen(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(
-      BuildContext context, IconData icon, String label, Widget screen) {
-    return Card(
-      elevation: 5,
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: ListTile(
-        leading: Icon(icon, size: 40, color: Colors.green),
-        title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.green),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => screen),
-          );
-        },
+  Widget _buildUpdatesRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildUpdateCard(
+              image: 'https://images.unsplash.com/photo-1545033131-485ea67fd7c3',
+              title: 'Art Exhibition',
+              date: 'Sept 23 - Oct 23',
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildUpdateCard(
+              image: 'https://images.unsplash.com/photo-1621789098261-13d1bcb891c3',
+              title: 'Van Gogh 360',
+              date: 'Sept 23 - Sept 30',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUpdateCard({
+    required String image,
+    required String title,
+    required String date,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.network(
+            image,
+            height: 120,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        Text(
+          date,
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDestinationsRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildDestinationCard(
+              image: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Shivneri_Fort_Entrance.jpg',
+              title: 'Shivneri Fort',
+              location: 'Junnar',
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildDestinationCard(
+              image: 'https://images.unsplash.com/photo-1602512657489-4f62f127313d',
+              title: 'Jep',
+              location: 'Pune',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDestinationCard({
+    required String image,
+    required String title,
+    required String location,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              image,
+              height: 80,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          Text(
+            location,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -453,6 +521,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
     super.initState();
     _initializeWeather();
   }
+
   Future<void> _initializeWeather() async {
     try {
       setState(() {
@@ -496,25 +565,18 @@ class _WeatherWidgetState extends State<WeatherWidget> {
         desiredAccuracy: LocationAccuracy.best,
         timeLimit: const Duration(seconds: 30),
       );
-      
-      // Force location refresh by clearing cache
-      await Geolocator.getLastKnownPosition();
-      
+
       Weather weather = await _weatherFactory.currentWeatherByLocation(
         position.latitude,
         position.longitude,
       );
-      
+
       setState(() {
         _weather = weather;
         _currentPosition = position;
         _isLoading = false;
       });
 
-      // Debug print to verify coordinates
-      debugPrint('Location: ${position.latitude}, ${position.longitude}');
-      debugPrint('Weather location: ${weather.areaName}');
-      
     } catch (e) {
       setState(() {
         _error = 'Failed to load weather data: $e';
@@ -523,6 +585,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       debugPrint('Error getting weather: $e');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -607,52 +670,8 @@ class _WeatherWidgetState extends State<WeatherWidget> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildWeatherInfo(
-                'Min',
-                '${_weather!.tempMin!.celsius?.round()}°C',
-                Icons.arrow_downward,
-              ),
-              _buildWeatherInfo(
-                'Max',
-                '${_weather!.tempMax!.celsius?.round()}°C',
-                Icons.arrow_upward,
-              ),
-              _buildWeatherInfo(
-                'Humidity',
-                '${_weather!.humidity}%',
-                Icons.water_drop,
-              ),
-            ],
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildWeatherInfo(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey[600]),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 

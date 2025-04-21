@@ -1,21 +1,15 @@
-import 'package:agri_app/bookresources_page.dart';
+
 // import 'package:agri_app/crop_prediction_screen.dart';
-import 'screens/crop_pred.dart';
-import 'screens/crop_price_screen.dart';
+
 // import 'package:agri_app/crop_price_prediction_screen.dart';
 // import 'package:agri_app/crop_disease_prediction_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'profile_page.dart';
-import 'about_page.dart';
-import 'connect_page.dart';
 import 'login_page.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:weather/weather.dart';
-import 't&c.dart';
-import 'h&s.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,8 +24,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const HomeContent(),
-    const BookResourcesPage(),
-    ConnectPage(),
+    
   ];
 
   @override
@@ -108,14 +101,14 @@ class _HomePageState extends State<HomePage> {
             leading: const Icon(Icons.person),
             title: const Text('Profile'),
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
+              //Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
             },
           ),
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('About Us'),
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutUsPage()));
+              // Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutUsPage()));
             },
           ),
           ListTile(
@@ -128,10 +121,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TermsPage()),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => TermsPage()),
+                  // );
                 },
               ),
           ListTile(
@@ -144,10 +137,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => HelpSupportPage()),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => HelpSupportPage()),
+                  // );
                 },
               ),
           ListTile(
@@ -234,11 +227,11 @@ class HomeContent extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
-        children: [
-          _buildFeatureCard(context, Icons.water_drop, 'Crop Yield Prediction', const CropPredictionScreen()),
-          _buildFeatureCard(context, Icons.currency_exchange, 'Market Trends', const CropPricePredictionScreen()),
-          // _buildFeatureCard(context, Icons.health_and_safety, 'Disease Detection', const CropDiseasePredictionScreen()),
-        ],
+        // children: [
+        //   _buildFeatureCard(context, Icons.water_drop, 'Crop Yield Prediction', const CropPredictionScreen()),
+        //   _buildFeatureCard(context, Icons.currency_exchange, 'Market Trends', const CropPricePredictionScreen()),
+        //   // _buildFeatureCard(context, Icons.health_and_safety, 'Disease Detection', const CropDiseasePredictionScreen()),
+        // ],
       ),
     );
   }

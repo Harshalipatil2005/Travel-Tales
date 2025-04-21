@@ -1,0 +1,2 @@
+C:/Users/hppat/agri-app/android/app/.cxx/Debug/202w6a2l/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/hppat/agri-app/android/app/.cxx/Debug/202w6a2l/armeabi-v7a/CMakeFiles/rebuild_cache.dir
